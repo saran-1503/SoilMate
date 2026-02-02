@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>SoilMate – Smart Soil Analyzer</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+body{
+  font-family:Segoe UI,Arial;
+  margin:0;
+  background:#f4f8f4;
+}
+
+/* HEADER */
+header{
+  background:
+  linear-gradient(rgba(0,0,0,.45),rgba(0,0,0,.45)),
+  url("https://upload.wikimedia.org/wikipedia/commons/6/6f/Soil_profile.jpg");
+  background-size:cover;
+  background-position:center;
+  color:white;
+  padding:30px;
+  text-align:center;
+}
+header h1{margin:0;font-size:36px}
+header p{font-size:18px}
+
+/* LAYOUT */
+.container{max-width:1200px;margin:auto;padding:20px}
+.section{
+  background:white;
+  padding:20px;
+  margin-top:25px;
+  border-radius:12px;
+  box-shadow:0 4px 10px rgba(0,0,0,0.1);
+}
+.grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
+  gap:15px;
+}
+
+/* INPUT */
+.input-card{
+  background:#eef6ee;
+  padding:12px;
+  border-radius:10px;
+}
+.input-card label{font-weight:bold}
+input,select,button{
+  width:100%;
+  padding:8px;
+  margin-top:5px;
+}
+button{
+  background:#2e7d32;
+  color:white;
+  border:none;
+  border-radius:8px;
+  cursor:pointer;
+}
+button:hover{background:#1b5e20}
+
+/* TABLE */
+table{width:100%;border-collapse:collapse}
+th,td{border:1px solid #ccc;padding:8px;text-align:center}
+.low{background:#ffcdd2}
+.medium{background:#fff9c4}
+.high{background:#c8e6c9}
+
+/* BADGES */
+.badge{
+  padding:4px 8px;
+  border-radius:6px;
+  color:white;
+  font-size:13px;
+}
+.badge.low{background:#e53935}
+.badge.medium{background:#fbc02d;color:black}
+.badge.high{background:#43a047}
+
+/* CARDS */
+.crop-card{
+  background:#e8f5e9;
+  padding:12px;
+  border-radius:10px;
+  margin-bottom:10px;
+}
+
+/* TOP 3 */
+.top3{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
+  gap:15px;
+}
+.top-card{
+  background:#c8e6c9;
+  padding:15px;
+  border-radius:12px;
+  text-align:center;
+  font-size:20px;
+  font-weight:bold;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <h1>🌱 SoilMate</h1>
+  <p>Smart Soil • Smart Crops • Smart Farming</p>
+</header>
+
+<div class="container">
+
+<!-- SETTINGS -->
+<div class="section">
+  <div class="grid">
+    <div>
+      <label>Language</label>
+      <select id="lang">
+        <option>English</option>
+        <option>தமிழ்</option>
+        <option>हिंदी</option>
+      </select>
+    </div>
+    <div>
+      <label>Unit</label>
+      <select id="unit" onchange="updateUnit()">
+        <option value="ppm">ppm</option>
+        <option value="mgkg">mg/kg</option>
+      </select>
+    </div>
+  </div>
+</div>
+
+<!-- INPUTS -->
+<div class="section">
+<h2>🧪 Enter Soil Values</h2>
+<div class="grid">
+<div class="input-card"><label>pH</label><input id="ph"></div>
+<div class="input-card"><label>EC (dS/m)</label><input id="ec"></div>
+<div class="input-card"><label>Nitrate <span class="unitText">(ppm)</span></label><input id="nitrate"></div>
+<div class="input-card"><label>Ammonium <span class="unitText">(ppm)</span></label><input id="ammonium"></div>
+<div class="input-card"><label>Potassium <span class="unitText">(ppm)</span></label><input id="potassium"></div>
+<div class="input-card"><label>Phosphorus <span class="unitText">(ppm)</span></label><input id="phosphorus"></div>
+<div class="input-card"><label>Iron <span class="unitText">(ppm)</span></label><input id="iron"></div>
+<div class="input-card"><label>Zinc <span class="unitText">(ppm)</span></label><input id="zinc"></div>
+<div class="input-card"><label>Manganese <span class="unitText">(ppm)</span></label><input id="manganese"></div>
+<div class="input-card"><label>Boron <span class="unitText">(ppm)</span></label><input id="boron"></div>
+<div class="input-card"><label>Sulphur <span class="unitText">(ppm)</span></label><input id="sulphur"></div>
+<div class="input-card"><label>Organic Carbon (%)</label><input id="organic"></div>
+</div>
+<br>
+<button onclick="analyze()">Analyze Soil</button>
+</div>
+
+<!-- REPORT -->
+<div class="section">
+<h2>📊 Soil Analysis Report</h2>
+<table>
+<tr><th>Parameter</th><th>Value</th><th>Status</th></tr>
+<tbody id="reportBody"></tbody>
+</table>
+</div>
+
+<!-- GRAPH -->
+<div class="section">
+<h2>📈 Nutrient Comparison</h2>
+<canvas id="chart"></canvas>
+</div>
+
+<!-- CROPS -->
+<div class="section">
+<h2>🌾 Crop Recommendations</h2>
+<div id="cropRec"></div>
+</div>
+
+<!-- TOP 3 -->
+<div class="section">
+<h2>⭐ Best 3 Overall Crops</h2>
+<div class="top3" id="top3Crops"></div>
+</div>
+
+<!-- FERTILIZER -->
+<div class="section">
+<h2>🧪 Fertilizer Recommendations</h2>
+<div id="fertRec"></div>
+</div>
+
+<!-- IRRIGATION -->
+<div class="section">
+<h2>💧 Irrigation Recommendations</h2>
+<div id="irrRec"></div>
+</div>
+
+</div>
+
+<script>
+let chart;
+
+const nutrients={
+ph:{r:[6,7.5],n:"pH",
+c:{Low:"Rice, Potato",Moderate:"Rice, Wheat, Maize",High:"Barley, Cotton"},
+f:{Low:"Apply lime",Moderate:"No fertilizer needed",High:"Add gypsum"},
+i:{Low:"Normal irrigation",Moderate:"Standard irrigation",High:"Light frequent irrigation"}},
+
+ec:{r:[1,3],n:"EC",
+c:{Low:"All crops",Moderate:"Rice, Wheat",High:"Cotton, Sorghum"},
+f:{Low:"No fertilizer",Moderate:"Balanced NPK",High:"Avoid salts"},
+i:{Low:"Normal",Moderate:"Controlled",High:"Drip irrigation"}},
+
+nitrate:{r:[20,50],n:"Nitrate",
+c:{Low:"Pulses",Moderate:"Rice, Wheat",High:"Leafy vegetables"},
+f:{Low:"Urea",Moderate:"Balanced N",High:"Reduce nitrogen"},
+i:{Low:"Normal",Moderate:"Normal",High:"Reduce irrigation"}},
+
+ammonium:{r:[10,40],n:"Ammonium",
+c:{Low:"Legumes",Moderate:"Rice, Wheat",High:"Sugarcane"},
+f:{Low:"Ammonium sulphate",Moderate:"Balanced",High:"Avoid N"},
+i:{Low:"Normal",Moderate:"Normal",High:"Light irrigation"}},
+
+potassium:{r:[120,280],n:"Potassium",
+c:{Low:"Banana, Sugarcane, Potato",Moderate:"Rice, Wheat",High:"Pulses"},
+f:{Low:"MOP",Moderate:"Balanced",High:"No K fertilizer"},
+i:{Low:"Normal",Moderate:"Normal",High:"Controlled"}},
+
+phosphorus:{r:[10,25],n:"Phosphorus",
+c:{Low:"Pulses, Oilseeds",Moderate:"Rice, Wheat",High:"Root crops"},
+f:{Low:"DAP / SSP",Moderate:"Balanced",High:"Avoid P"},
+i:{Low:"Normal",Moderate:"Normal",High:"Light"}},
+
+iron:{r:[4,10],n:"Iron",
+c:{Low:"Rice",Moderate:"All crops",High:"Grasses"},
+f:{Low:"Ferrous sulphate",Moderate:"None",High:"No iron"},
+i:{Low:"Flood irrigation",Moderate:"Normal",High:"Drainage"}},
+
+zinc:{r:[1,3],n:"Zinc",
+c:{Low:"Pulses",Moderate:"Rice",High:"Vegetables"},
+f:{Low:"Zinc sulphate",Moderate:"None",High:"Avoid zinc"},
+i:{Low:"Normal",Moderate:"Normal",High:"Normal"}},
+
+manganese:{r:[2,5],n:"Manganese",
+c:{Low:"Legumes",Moderate:"All crops",High:"Rice"},
+f:{Low:"Mn sulphate",Moderate:"None",High:"Avoid Mn"},
+i:{Low:"Normal",Moderate:"Normal",High:"Drain excess water"}},
+
+boron:{r:[0.5,2],n:"Boron",
+c:{Low:"Cereals",Moderate:"Vegetables",High:"Barley"},
+f:{Low:"Borax",Moderate:"None",High:"Avoid boron"},
+i:{Low:"Normal",Moderate:"Normal",High:"Light irrigation"}},
+
+sulphur:{r:[10,20],n:"Sulphur",
+c:{Low:"Pulses",Moderate:"Rice",High:"Onion"},
+f:{Low:"Gypsum",Moderate:"None",High:"Avoid sulphur"},
+i:{Low:"Normal",Moderate:"Normal",High:"Controlled"}},
+
+organic:{r:[0.75,1.5],n:"Organic Carbon",
+c:{Low:"Millets",Moderate:"All crops",High:"Vegetables"},
+f:{Low:"Compost/FYM",Moderate:"Maintain",High:"No addition"},
+i:{Low:"Normal",Moderate:"Normal",High:"Reduced irrigation"}}
+};
+
+function status(v,a,b){return v<a?"Low":v>b?"High":"Moderate"}
+
+function analyze(){
+let body="",labels=[],vals=[],colors=[];
+let cropHTML="",fertHTML="",irrHTML="",count={};
+
+for(let k in nutrients){
+let v=+document.getElementById(k).value;
+if(isNaN(v))continue;
+let s=status(v,nutrients[k].r[0],nutrients[k].r[1]);
+
+body+=`<tr class="${s.toLowerCase()}">
+<td>${nutrients[k].n}</td>
+<td>${v}</td>
+<td><span class="badge ${s.toLowerCase()}">${s}</span></td>
+</tr>`;
+
+labels.push(nutrients[k].n);
+vals.push(v);
+colors.push(s=="Low"?"#e53935":s=="High"?"#43a047":"#fbc02d");
+
+cropHTML+=`<div class="crop-card"><b>${nutrients[k].n} (${s})</b><br>${nutrients[k].c[s]}</div>`;
+fertHTML+=`<div class="crop-card"><b>${nutrients[k].n}</b><br>${nutrients[k].f[s]}</div>`;
+irrHTML+=`<div class="crop-card"><b>${nutrients[k].n}</b><br>${nutrients[k].i[s]}</div>`;
+
+nutrients[k].c[s].split(",").forEach(c=>count[c.trim()]=(count[c.trim()]||0)+1);
+}
+
+document.getElementById("reportBody").innerHTML=body;
+document.getElementById("cropRec").innerHTML=cropHTML;
+document.getElementById("fertRec").innerHTML=fertHTML;
+document.getElementById("irrRec").innerHTML=irrHTML;
+
+let top=Object.entries(count).sort((a,b)=>b[1]-a[1]).slice(0,3);
+document.getElementById("top3Crops").innerHTML=
+top.map((c,i)=>`<div class="top-card">#${i+1}<br>${c[0]}</div>`).join("");
+
+if(chart)chart.destroy();
+chart=new Chart(document.getElementById("chart"),{
+type:"bar",
+data:{labels:labels,datasets:[{data:vals,backgroundColor:colors}]},
+options:{plugins:{legend:{display:false}}}
+});
+}
+
+function updateUnit(){
+document.querySelectorAll(".unitText")
+.forEach(e=>e.innerText=document.getElementById("unit").value=="ppm"?"(ppm)":"(mg/kg)");
+}
+</script>
+</body>
+</html>
